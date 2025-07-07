@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generate/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int       @id @default(autoincrement())
+  authId   String    @unique
+  posts    Post[]    @relation("AuthorPost")
+  messages Message[]
+  Post     Post?     @relation(fields: [postId], references: [id])
+  postId   Int?
+}
+
+model Post {
+  id             Int        @id @default(autoincrement())
+  title          String
+  content        String?
+  mediaUrls      String?
+  published      Boolean    @default(false)
+  publishDate    DateTime   @default(now())
+  unpublish      Boolean    @default(false)
+  unpublishDate  DateTime?
+  preview        Boolean    @default(false)
+  previewMessage String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  author         User       @relation("AuthorPost", fields: [authorId], references: [authId])
+  authorId       String
+  recipients     Recipients @default(PERSONAL)
+  shareTo        User[]
+  messages       Message[]
+}
+
+model Message {
+  id          Int       @id @default(autoincrement())
+  message     String
+  sended      Boolean   @default(false)
+  sendDate    DateTime  @default(now())
+  deleted     Boolean   @default(false)
+  deletedDate DateTime?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [authId])
+  userId      String
+  post        Post      @relation(fields: [postId], references: [id])
+  postId      Int
+}
+
+enum Recipients {
+  PERSONAL
+  SHARED
+  PUBLIC
+}
