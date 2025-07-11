@@ -1,5 +1,6 @@
 import { useState, useEffect, createContext } from "react";
 import { supabase } from "./utils/supabase-client.js"
+import { Navbar } from "./components/Navbar.jsx";
 import { Header } from "./components/Header.jsx"
 import { Feed } from "./pages/Feed.jsx"
 import { Chat } from "./pages/Chat.jsx"
@@ -31,12 +32,15 @@ function App() {
   return (
     <Session.Provider value={[session, setSession]}>
       <QueryClientProvider client={queryClient}>
-        <Header/>
-        <Routes>
-          <Route index element={<Feed />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-        </Routes>
+        <div className="flex flex-col min-h-screen max-w-[1728px] m-auto px-2">
+          <Navbar/>
+          <Routes>
+            <Route index element={<Feed />} />
+            <Route path="/feed" element={<Feed />} />
+            <Route path="/chat" element={<Chat />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+          </Routes>
+        </div>
       </QueryClientProvider>
     </Session.Provider>
   )
