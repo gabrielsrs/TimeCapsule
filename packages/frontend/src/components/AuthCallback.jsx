@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate  } from "react-router"; // Or `useRouter` in Next.js
 import { supabase } from "../utils/supabase-client.js";
+import { createUser } from "../utils/fetch-data.js"
 
 export function AuthCallback() {
   const navigate  = useNavigate()
@@ -18,21 +19,17 @@ export function AuthCallback() {
       }
 
       // Send access_token to backend
-      const res = await fetch("http://127.0.0.1:5000/api/users", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        },
-        credentials: "include"
-      });
+      createUser({ token: session.access_token })
+        .then()
+        .catch(async error => {
+          console.error("Auth error:", error)
 
-      console.log(res);
+          await supabase.auth.signOut({scope: 'local'})
+        })
 
       navigate ("/")
     }
 
     handleRedirect();
   }, [navigate]);
-
-  return <p>Signing in...</p>;
 }
