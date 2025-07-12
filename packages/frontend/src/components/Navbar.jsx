@@ -30,7 +30,7 @@ export function Navbar() {
     };
 
     return (
-        <nav className="flex justify-between fixed top-0 max-w-[1696px] w-full p-4">
+        <nav className="flex justify-between fixed top-0 max-w-[1728px] w-full py-4">
             <div className="flex gap-2 items-center">
                 <Button size="sm" variant="nav">
                     <Hourglass fill="#1E1E2F" stroke="#1E1E2F" width="18" height="18" className="rotate-90 cursor-pointer"/>

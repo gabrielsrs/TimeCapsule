@@ -69,7 +69,7 @@ export function Feed() {
     },[recipients])
 
     return (
-        <div className="grid grid-cols-18 grid-rows-auto gap-4 mt-12 p-4">
+        <div className="grid grid-cols-18 grid-rows-auto gap-4 pt-16 p-4">
             <div className="h-52 flex col-span-5 pt-14">
                 <div>
                     <h1 className="text-[114px]/[100px] font-[fantasy] px-0.5">Feed</h1>

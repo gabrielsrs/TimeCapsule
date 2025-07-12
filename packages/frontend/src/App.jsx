@@ -32,7 +32,7 @@ function App() {
   return (
     <Session.Provider value={[session, setSession]}>
       <QueryClientProvider client={queryClient}>
-        <div className="flex flex-col min-h-screen max-w-[1728px] m-auto px-2">
+        <div className="flex flex-col min-h-screen max-w-[1728px] m-auto">
           <Navbar/>
           <Routes>
             <Route index element={<Feed />} />
