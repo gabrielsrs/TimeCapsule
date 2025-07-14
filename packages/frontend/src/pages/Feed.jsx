@@ -20,9 +20,12 @@ import {
     MessageCircle,
     MessageSquareShare,
     CalendarCheck2,
+    Calendar,
+    Users,
     SendHorizontal,
     SquarePen,
-    Trash2
+    Trash2,
+    Search
 } from "lucide-react"
 
 export function Feed() {
@@ -33,6 +36,9 @@ export function Feed() {
     const [mediaLink, setMediaLink] = useState(false)
     const [postContent, setPostContent] = useState(false)
     const [postMessage, setPostMessage] = useState(false)
+    const [dateFrom, setDateFrom] = useState(undefined)
+    const [dateTo, setDateTo] = useState(undefined)
+
     // const { data: posts } = useQuery({
     //     queryKey: ['posts'],
     //     queryFn: getPosts
@@ -62,6 +68,12 @@ export function Feed() {
             setSharePost(false)
         }
         setMediaLink(!mediaLink)
+    }
+
+    function cleanFilter() {
+        document.querySelector("#filter").reset()
+        setDateFrom(undefined)
+        setDateTo(undefined)
     }
 
     useEffect(() => {
@@ -137,22 +149,30 @@ export function Feed() {
                     )}
                 </div>
             </div>
-            <div className="col-span-5">
-                <div className="flex justify-between">
-                    <span>/ Filters</span>
-                    <span>/ Clean Filters</span>
+            <form id="filter" className="col-span-5">
+                <div className="flex justify-between items-center text-medium font-medium font-mono">
+                    <div className="flex items-center gap-2">
+                        <span>/Filters</span>
+                        <Search size={14} className="cursor-pointer"/>
+                    </div>
+                    <span className="text-sm cursor-pointer" onClick={() => cleanFilter()}>Clean Filters</span>
                 </div>
                 <Separator className="my-2"/>
-                <div className="flex w-full gap-2">
-                    <div className="w-[250px]">
-                        <Filter filterName={"recipients"} filterOptions={["Personal", "Share", "Public"]}/>
-                        <Filter filterName={"date"} filterCheckbox={false} filterOptions={[<DateFilter state={"Publish"}/>, <DateFilter state={"Unpublish"}/>]}/>
+                <div className="flex w-full justify-between gap-2">
+                    <div>
+                        <Filter filterName={"recipients"} filterIcon={<MailQuestionMark size={16}/>} filterOptions={["Personal", "Share", "Public"]}/>
+                        <Filter filterName={"publish date"} filterIcon={<Calendar size={16}/>} filterCheckbox={false} filterOptions={[
+                            <div className="flex gap-2 items-end mb-4">
+                                <DateFilter text={"From"} date={dateFrom} setDate={setDateFrom} align={"start"}/>
+                                <DateFilter text={"To"} date={dateTo} setDate={setDateTo} align={"end"}/>
+                            </div>
+                        ]}/>
                     </div>
-                    <div className="flex-1">
-                        <Filter filterName={"users"} filterOptions={["User1", "User2", "User3", "User4", "User5", "User6"]}/>
+                    <div className="w-[185px] max-w-[185px]">
+                        <Filter filterName={"users"} filterIcon={<Users size={16}/>} filterOptions={["User1ggggggggggggggggggggggggggggggggggggggggggggggggggg", "User2", "User3", "User4", "User5", "User6"]}/>
                     </div>
                 </div>
-            </div>
+            </form>
             <div className="col-span-13">
                 <div className="flex">
                     <span className="flex-5">/ Publish Date</span>
