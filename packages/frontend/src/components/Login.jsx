@@ -1,5 +1,7 @@
 import { Button } from "./Button";
 import { supabase } from "../utils/supabase-client.js"
+import { Hourglass } from 'lucide-react';
+
 
 export function Login() {
     async function handleLogin() {
@@ -12,6 +14,14 @@ export function Login() {
     };
 
     return (
-        <Button title={"Login"} onClick={handleLogin} style={{ cursor: "pointer" }}/>
+        <nav className="flex">
+            <div>
+                <Hourglass/>
+            </div>
+            <div>
+                <Button title={"Login"} onClick={handleLogin} style={{ cursor: "pointer" }}/>
+            </div>
+        </nav>
+        
     )
 }
