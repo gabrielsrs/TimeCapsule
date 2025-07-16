@@ -10,6 +10,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar"
+import {
     Link,
     Eye,
     EyeOff,
@@ -25,7 +30,10 @@ import {
     SendHorizontal,
     SquarePen,
     Trash2,
-    Search
+    Search,
+    ChevronRight,
+    ChevronLeft,
+    Check
 } from "lucide-react"
 
 export function Feed() {
@@ -33,7 +41,17 @@ export function Feed() {
     const [previewMessage, setPreviewMessage] = useState(false)
     const [recipients, setRecipients] = useState("Private")
     const [sharePost, setSharePost] = useState(false)
+    const [onSearch, setOnSearch] = useState(false)
+    const [searchUsers, setSearchUsers] = useState([
+        {id: "123", username: "Angelico", profilePicture: "https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-profile-picture-business-profile-woman-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-1340.jpg?semt=ais_hybrid&w=740"},
+        {id: "312", username: "Rafa", profilePicture: "https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-profile-picture-business-profile-woman-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-1340.jpg?semt=ais_hybrid&w=740"},
+        {id: "434", username: "Ca", profilePicture: "https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-profile-picture-business-profile-woman-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-1340.jpg?semt=ais_hybrid&w=740"},
+        {id: "543", username: "Gar", profilePicture: "https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-profile-picture-business-profile-woman-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-1340.jpg?semt=ais_hybrid&w=740"},
+        {id: "643", username: "te", profilePicture: ""}
+    ])
+    const [selectedSearchedUsers, setSelectedSearchedUsers] = useState([])
     const [mediaLink, setMediaLink] = useState(false)
+    const [mediaLinkList, setMediaLinkList] = useState([{link: "test", state: false}, {link: "test", state: false}, {link: "test", state: false}, {link: "test", state: false}])
     const [postContent, setPostContent] = useState(false)
     const [postMessage, setPostMessage] = useState(false)
     const [dateFrom, setDateFrom] = useState(undefined)
@@ -80,6 +98,71 @@ export function Feed() {
         recipients != "Share" && setSharePost(false)
     },[recipients])
 
+    function blockText(event, max=0) {
+        const el = event.currentTarget
+        const currentText = el.textContent
+
+        if (currentText.length > max) {
+            const selection = window.getSelection()
+            const range = document.createRange()
+
+            el.textContent = currentText.slice(0, max)
+
+            range.selectNodeContents(el)
+            range.collapse(false)
+            selection.removeAllRanges()
+            selection.addRange(range)
+        }
+    }
+
+    function addTextPlaceholder(event, defaultText="") {
+        const el = event.currentTarget
+
+        if (el.textContent.length == 0) {
+            el.textContent = defaultText
+        }
+    }
+
+    function changeMediaLinkList({ link="", state=undefined }, index) {
+        setMediaLinkList(listLink => {
+            const newList = [...listLink]
+            const item = newList[index]
+
+            if(link) item.link = link
+            if (state != undefined) item.state = state
+
+            newList[index] = item
+            return newList
+        })
+    }
+
+    function searchUsersToShare(event) {
+        if(event.target.value) {
+            setOnSearch(true)
+        } else {
+            setOnSearch(false)
+        }
+    }
+
+    function addUser(event) {
+        const target = event.target.dataset.slot
+
+        if (target == "button") {
+            setSelectedSearchedUsers(selectedUsers => [...selectedUsers, searchUsers[0]])
+        }
+
+        if (target == "badge") {
+            const action = event.target.firstChild.dataset.action
+            
+
+            if(action == "add") {
+                setSelectedSearchedUsers(selectedUsers => [...selectedUsers, ...searchUsers.filter(user => user.id == event.target.id)])
+            } else if(action == "remove") {
+                setSelectedSearchedUsers(selectedUsers => selectedUsers.filter(user => user.id != event.target.id))
+            }
+        }
+    }
+
     return (
         <div className="grid grid-cols-18 grid-rows-auto gap-4 pt-16 p-4">
             <div className="h-52 flex col-span-5 pt-14">
@@ -97,12 +180,12 @@ export function Feed() {
                 </div>
             </div>
             <div className="col-span-13">
-                <div className="relative border-2 rounded-3xl p-4 ml-4">
-                    <div className="flex mb-2">
-                        <div className="py-0.5 pr-2">Title</div>
-                        <div className="py-0.5 px-2 border-l-2">Content</div>
+                <form className="relative border-2 rounded-3xl p-4 ml-4" onSubmit={event => event.preventDefault()}>
+                    <div className="block mb-2">
+                        <div className="inline py-0.5 pr-2 outline-none" contentEditable="true" onInput={event => blockText(event, 80)} onBlur={event => addTextPlaceholder(event, "Title")}>Title</div>
+                        <div className="inline py-0.5 px-2 border-l-2 outline-none" contentEditable="true" onInput={event => blockText(event, 2000)} onBlur={event => addTextPlaceholder(event, "Content")}>Content</div>
                         {previewMessage && (
-                            <div className="py-0.5 px-2 border-l-2">Preview message</div>
+                            <div className="inline py-0.5 px-2 border-l-2 outline-none" contentEditable="true" onInput={event => blockText(event, 100)} onBlur={event => addTextPlaceholder(event, "Preview message")}>Preview message</div>
                         )}
                     </div>
                     <div className="flex justify-between items-center">
@@ -129,25 +212,87 @@ export function Feed() {
                     </div>
                     {sharePost && recipients == "Share" && (
                         <>
-                        <div className="flex w-full relative mt-4">
-                            <div>Search for users to share</div>
-                            <div className="absolute right-0 py-0.5 px-2 border-l-2"><Plus /></div>
-                        </div>
-                        <div className="w-full mt-4">
-                            <Separator/>
-                            <div className="flex py-1.5">
-                                <div className="flex"><Plus /><span>Gabriel Souza</span></div>
+                            <div className="w-full flex items-center relative pr-10 mt-4">
+                                <Input className="min-w-48 border-none shadow-none focus-visible:border-none focus-visible:ring-[0]" placeholder="Search for users to share" onChange={(event) => searchUsersToShare(event)}/>
+                                {selectedSearchedUsers.length > 0 && (
+                                    <div className="*:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:grayscale px-1">
+                                        {selectedSearchedUsers.length > 0 && selectedSearchedUsers.slice(0, 3).map(user => {
+                                            return (
+                                                <Avatar>
+                                                    <AvatarImage src={user.profilePicture} alt={user.username} />
+                                                    <AvatarFallback>{user.username.slice(0, 1).toUpperCase()}</AvatarFallback>
+                                                </Avatar>
+                                            )
+                                        })}
+                                        {selectedSearchedUsers.length > 3 && (
+                                            <Avatar>
+                                                <AvatarFallback>+{selectedSearchedUsers.length - 3}</AvatarFallback>
+                                            </Avatar>
+                                        )}                                    
+                                    </div>
+                                )}
+                                <Button className="absolute right-0 py-0.5 px-2 border-l-2 cursor-pointer" onClick={(event) => addUser(event)}><Plus /></Button>
                             </div>
-                        </div>
+                            <div className="w-full mt-2">
+                                <Separator/>
+                                <div className="flex py-1.5">
+                                    {onSearch? searchUsers.map(user => {
+                                            const isSelected = selectedSearchedUsers.some(userSelected => userSelected.id == user.id)
+                                            return (
+                                                <Badge id={user.id} className="cursor-pointer mr-1" onClick={(event) => addUser(event)}>
+                                                    {isSelected ? <Check size={14} data-action="remove"/>: <Plus size={14} data-action="add"/>}
+                                                    {user.username}
+                                                </Badge>
+                                            )
+                                        }): !selectedSearchedUsers.length? <span className="text-sm">None user selected</span>: selectedSearchedUsers.map(user => {
+                                            return (
+                                                <Badge id={user.id} className="cursor-pointer mr-1" onClick={(event) => addUser(event)}>
+                                                    <Check size={14} data-action="remove"/>
+                                                    {user.username}
+                                                </Badge>
+                                            )
+                                        })
+                                    }
+                                </div>
+                            </div>
                         </>
                     )}
                     {mediaLink && (
-                        <div className="flex w-full relative mt-4">
-                            <div>Add media link here</div>
-                            <div className="absolute right-0 py-0.5 px-2 border-l-2"><Plus /></div>
+                        <div className="w-full flex items-center relative mt-4">
+                            {mediaLinkList.length > 0 && (
+                                mediaLinkList.map((link, index) => {
+                                    return (
+                                        <div className={`${link.state? "w-full": "w-fit"} mr-0.5 flex border-2 rounded-sm`}>
+                                            <div key={index} className="p-1 bg-palette-grey/30 cursor-pointer" title={link.link} onClick={() => {
+                                                changeMediaLinkList({ state: !link.state }, index)
+                                            }
+                                            }>
+                                                {link.state? <ChevronLeft size={16}/>: <ChevronRight size={16}/>}
+                                            </div>
+                                            {link.state && (
+                                                <div className="flex flex-1 items-center gap-1">
+                                                    <Input className="h-6 p-0 px-1 border-none shadow-none focus-visible:border-none focus-visible:ring-[0] text-sm" type="text" value={link.link} onChange={(e) => {
+                                                        changeMediaLinkList({ link: e.target.value }, index)
+                                                    }}/>
+                                                    <Trash2 size={22} className="p-1 cursor-pointer" onClick={() => setMediaLinkList(linkList => linkList.filter((item, filterIndex) => item[filterIndex] =! item[index]))}/>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                })
+                            )}
+                            <div className="flex flex-1" title={mediaLinkList.length >= 20 && "Max number of links reached"}>
+                                <Input id="add-media-link" className="min-w-48 pr-12 border-none shadow-none focus-visible:border-none focus-visible:ring-[0]" placeholder="Add media link here" type="text"/>
+                                <Button className="cursor-pointer absolute right-0 py-0.5 px-2 border-l-2" onClick={e => {
+                                    const input = e.target.previousSibling.value
+                                    if (input) {
+                                        setMediaLinkList(linkList => [...linkList, {link: input, state: false}])
+                                    }
+                                }} disabled={!(mediaLinkList.length < 20)}><Plus /></Button>
+                            </div>
                         </div>
                     )}
-                </div>
+                </form>
             </div>
             <form id="filter" className="col-span-5">
                 <div className="flex justify-between items-center text-medium font-medium font-mono">
