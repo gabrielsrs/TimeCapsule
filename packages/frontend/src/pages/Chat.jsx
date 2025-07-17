@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { DateMessage } from '../components/DateMessage.jsx'
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
@@ -131,7 +132,7 @@ export function Chat() {
                             <div className="h-11 flex justify-end items-center relative mt-2">
                                 <Input className="h-14 pr-22 absolute" placeholder="Send your message"/>
                                 <span title="Send" className="z-1"><SendHorizontal className="cursor-pointer mr-4"/></span>
-                                <span title="Publish message" className="z-1"><CalendarCheck2 className="cursor-pointer mr-4"/></span>
+                                <span title="Publish message" className="z-1"><DateMessage /></span>
                             </div>
                         </div>
                     
@@ -414,8 +415,8 @@ export function Chat() {
             <div className="min-h-24 h-fit flex flex-col col-span-5 p-2 border-2 rounded-2xl relative">
                 <div className="absolute top-[-14px] bg-white px-2 ml-4">Metadata</div>
                 <div className="flex justify-between items-center">
-                    <span>Hedigar</span>
-                    <img className="size-8 bg-palette-dark-slate rounded-3xl p-0.5" src="" alt="" /> {/* user-picture */}
+                    <span className="truncate">Hedigar</span>
+                    <img className="size-8 bg-palette-dark-slate rounded-3xl p-0.5" src="" alt="" />
                 </div>
 
                 <div className="flex flex-col">
