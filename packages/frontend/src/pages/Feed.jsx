@@ -5,6 +5,7 @@ import { Filter } from "../components/ui/Filter.jsx"
 import { DateFilter } from "../components/ui/DateFilter.jsx"
 import { PublishDate } from "../components/PublishDate.jsx"
 import { DropdownMenuSelect } from '../components/DropdownMenuSelect.jsx'
+import { DateMessage } from '../components/DateMessage.jsx'
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -319,7 +320,7 @@ export function Feed() {
                 </div>
             </form>
             <div className="col-span-13">
-                <div className="flex">
+                <div className="flex gap-2 font-mono">
                     <span className="flex-5">/ Publish Date</span>
                     <span className="flex-20">/ Title</span>
                     <span className="flex-4">/ Recipient</span>
@@ -328,7 +329,7 @@ export function Feed() {
                 </div>
                 <Separator className="my-2"/>
                 <div>
-                    <div className="flex items-center cursor-pointer" onClick={()  => setPostContent(!postContent)}>
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={()  => setPostContent(!postContent)}>
                         <div className="flex flex-col flex-5 items-start">
                             <div className="flex items-center">
                                 <div className="bg-palette-dark-slate left-0 size-1.5 mr-2.5"></div>
@@ -360,7 +361,7 @@ export function Feed() {
                 <Separator className="my-2"/>
 
                 <div>
-                    <div className="flex items-center cursor-pointer" onClick={()  => setPostContent(!postContent)}>
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={()  => setPostContent(!postContent)}>
                         <div className="flex flex-col flex-5 items-start">
                             <div className="flex items-center">
                                 <div className="bg-palette-dark-slate left-0 size-1.5 mr-2.5"></div>
@@ -382,7 +383,7 @@ export function Feed() {
                         </div>
                     </div>
                     {postContent && (
-                        <div className="flex mt-4">
+                        <div className="flex gap-2 mt-4">
                             <div className="flex-25">
                                 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus iaculis risus et sem interdum vestibulum. Duis tristique felis sed est tincidunt lacinia. Vivamus porta lacinia magna, sed faucibus nulla egestas sed. Vivamus commodo, eros vitae laoreet convallis, diam felis efficitur arcu, a malesuada lorem urna eu sapien. Fusce mattis elit.</p>
                                 <div></div>
@@ -390,23 +391,23 @@ export function Feed() {
                                     <div>
                                         <Separator className="my-2"/>
                                         <div className="h-48 flex flex-col-reverse overflow-y-auto">
-                                            <div className="w-fit flex-col">
+                                            <div className="w-fit max-w-[80%] flex-col">
                                                 <div className="flex justify-between">
                                                     <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">20</span>
                                                     <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
                                                 </div>
-                                                <div className="w-fit px-2.5 border-x-2 border-palette-dark-slate">
-                                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                                                <div className="w-fit px-2.5 border-x-[0.15rem] border-palette-dark-slate">
+                                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit adipiscing elit. Phasellus iaculis risus et sem interdum vestibulum. Duis tristique felis sed est tincidunt lacinia. Vivamus porta lacinia ma.</p>
                                                 </div>
                                             </div>
 
-                                            <div className="w-fit flex-col">
+                                            <div className="w-fit max-w-[80%] flex-col self-end">
                                                 <div className="flex justify-between">
                                                     <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">21</span>
                                                     <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
                                                 </div>
                                                 <div className="w-fit px-2.5 border-x-2 border-palette-dark-slate">
-                                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit adipiscing elit. Phasellus iaculis risus et sem interdum vestibulum. Duis tristique felis sed est tincidunt lacinia. Vivamus porta lacinia ma.</p>
                                                 </div>
                                             </div>
 
@@ -463,21 +464,21 @@ export function Feed() {
                                         <div className="h-11 flex justify-end items-center relative mt-2">
                                             <Input className="pr-14 absolute" placeholder="Send your message"/>
                                             <span title="Publish message" className="z-1"><SendHorizontal className="cursor-pointer mr-1"/></span>
-                                            <span title="Publish message" className="z-1"><CalendarCheck2 className="cursor-pointer mr-1"/></span>
+                                            <span title="Publish message" className="z-1"><DateMessage /></span>
                                         </div>
                                     </div>
                                 )}
                             </div>
                             <div className="flex flex-col flex-10 justify-start">
                                 <div className="flex justify-between">
-                                    <div className="flex items-center gap-1">
-                                        <span className="select-none" title="Message"  onClick={() => setPostMessage(!postMessage)}><MessageCircle className="cursor-pointer"/></span>
-                                        <span title="Go to chat"><MessageSquareShare className="cursor-pointer"/></span>
-                                        <span title="Edit"><SquarePen className="cursor-pointer"/></span>
-                                        <span title="Remove"><Trash2 className="cursor-pointer"/></span>
+                                    <div className="flex items-center gap-1 mr-1">
+                                        <span className="select-none" title="Message"  onClick={() => setPostMessage(!postMessage)}><MessageCircle size={18} className="cursor-pointer"/></span>
+                                        <span title="Go to chat"><MessageSquareShare size={18} className="cursor-pointer"/></span>
+                                        <span title="Edit"><SquarePen size={18} className="cursor-pointer"/></span>
+                                        <span title="Remove"><Trash2 size={18} className="cursor-pointer"/></span>
                                     </div>
                                     <div className="flex items-center">
-                                        <span>Hedigar</span>
+                                        <span className="px-1 max-w-48 truncate" title="">Hedigar</span>
                                         <img className="size-8 bg-palette-dark-slate rounded-3xl p-0.5" src="" alt="" /> {/* user-picture */}
                                     </div>
                                 </div>
