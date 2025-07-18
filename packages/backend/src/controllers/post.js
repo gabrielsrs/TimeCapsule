@@ -2,7 +2,7 @@ const { StatusCodes } = require('http-status-codes');
 
 const has = require('has-keys');
 
-const postService = require('../services/posts.js');
+const postService = require('../services/post.js');
 
 
 module.exports = {

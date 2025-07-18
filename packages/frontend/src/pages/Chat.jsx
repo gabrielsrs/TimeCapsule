@@ -5,16 +5,20 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import {
     SendHorizontal,
-    CalendarCheck2,
     Plus,
     Minus,
     Search,
 } from "lucide-react"
+import { useSocket } from "../context/SocketProvider.jsx"
 
 export function Chat() {
     const [chatQuantity, setChatQuantity] = useState(0)
     const [postContent, setPostContent] = useState(false)
     
+    const { socketClient } = useSocket()
+
+    socketClient.emitStatus()
+    socketClient.onStatus(status => console.log(status))
     
     return (
         <div className="h-screen grid grid-cols-18 grid-rows-[auto_1fr] gap-4 pt-12 p-4">

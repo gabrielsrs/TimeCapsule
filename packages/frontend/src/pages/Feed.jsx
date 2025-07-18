@@ -52,23 +52,23 @@ export function Feed() {
     ])
     const [selectedSearchedUsers, setSelectedSearchedUsers] = useState([])
     const [mediaLink, setMediaLink] = useState(false)
-    const [mediaLinkList, setMediaLinkList] = useState([{link: "test", state: false}, {link: "test", state: false}, {link: "test", state: false}, {link: "test", state: false}])
+    const [mediaLinkList,   ] = useState([{link: "test", state: false}, {link: "test", state: false}, {link: "test", state: false}, {link: "test", state: false}])
     const [postContent, setPostContent] = useState(false)
     const [postMessage, setPostMessage] = useState(false)
     const [dateFrom, setDateFrom] = useState(undefined)
     const [dateTo, setDateTo] = useState(undefined)
 
-    // const { data: posts } = useQuery({
-    //     queryKey: ['posts'],
-    //     queryFn: getPosts
-    // })
+    const { data: posts } = useQuery({
+        queryKey: ['posts'],
+        queryFn: getPosts
+    })
 
     // const { data: user } = useQuery({
     //     queryKey: ['users'],
     //     queryFn: () => getUser({userId: ""})
     // })
     
-    // console.log(posts)
+    console.log(posts)
     // console.log(user)
 
     function handlePreviewMessage(){

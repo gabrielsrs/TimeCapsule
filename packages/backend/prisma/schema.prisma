@@ -12,12 +12,13 @@ datasource db {
 }
 
 model User {
-  id       Int       @id @default(autoincrement())
-  authId   String    @unique
-  posts    Post[]    @relation("AuthorPost")
+  id       Int        @id @default(autoincrement())
+  authId   String     @unique
+  posts    Post[]     @relation("AuthorPost")
   messages Message[]
-  Post     Post?     @relation(fields: [postId], references: [id])
+  Post     Post?      @relation(fields: [postId], references: [id])
   postId   Int?
+  Metadata Metadata[]
 }
 
 model Post {
@@ -38,6 +39,7 @@ model Post {
   recipients     Recipients @default(PERSONAL)
   shareTo        User[]
   messages       Message[]
+  Metadata       Metadata[]
 }
 
 model Message {
@@ -52,6 +54,17 @@ model Message {
   userId      String
   post        Post      @relation(fields: [postId], references: [id])
   postId      Int
+}
+
+model Metadata {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation(fields: [userId], references: [authId])
+  userId        String
+  post          Post     @relation(fields: [postId], references: [id])
+  postId        Int
+  messagesCount Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 enum Recipients {

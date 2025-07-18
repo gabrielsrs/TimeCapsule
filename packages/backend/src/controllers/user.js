@@ -1,6 +1,6 @@
 const { StatusCodes } = require('http-status-codes');
 
-const userService = require('../services/users.js');
+const userService = require('../services/user.js');
 
 
 module.exports = {
