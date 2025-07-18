@@ -4,16 +4,10 @@ const { tokenDataFromSocket } = require("../util/tokenData.js")
 module.exports = function setupWebSocket(server){
     const io = new Server(server, {
         cors: {
-<<<<<<< Updated upstream
             origin: "http://localhost:3000",
             credentials: true,
         },
     })
-=======
-            origin: "http://127.0.0.1:3000"
-        }
-    });
->>>>>>> Stashed changes
 
     io.on("connection", socket => {
         socket.on("enterPostChat", postId => { // use computeUserIdFromHeaders to userId
@@ -24,13 +18,15 @@ module.exports = function setupWebSocket(server){
             // load messages
         })
 
-        socket.on("message", (postId, message) => {
+        socket.on("message", messageObj => {
             // validations if user in in this post
 
             // https://socket.io/docs/v3/rooms/#:~:text=//%20main%20namespace%0Aconst%20rooms%20%3D%20io.of(%22/%22).adapter.rooms%3B
-            const rooms = io.of("/").adapter.rooms; 
+            // const rooms = io.of("/").adapter.rooms; 
 
-            io.to(postId).emit("message", message)
+            // io.to(postId).emit("message", message)
+
+            console.log(messageObj)
 
             // save messages
         })
@@ -42,8 +38,9 @@ module.exports = function setupWebSocket(server){
         socket.on("status", () => {
             console.log("status")
             
-            const data = tokenDataFromSocket(socket).then(() => console.log(data))
-            .catch(err => console.log(err.message))
+            const data = tokenDataFromSocket(socket)
+                .then(res => console.log(res))
+                .catch(err => console.log(err.message))
             
 
 

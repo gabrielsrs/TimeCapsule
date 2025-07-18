@@ -3,11 +3,7 @@ const { StatusCodes } = require('http-status-codes');
 const has = require('has-keys');
 
 const postService = require('../services/post.js');
-<<<<<<< Updated upstream
-=======
 const tokenData = require("../util/tokenData.js")
->>>>>>> Stashed changes
-
 
 module.exports = {
     async getPostById(req, res){

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useMemo } from "react"
 import { SocketClient } from "../lib/socketClient.js"
 import { useSession } from "../context/SessionProvider.jsx"
 
@@ -7,8 +7,8 @@ const SocketContext = createContext(null)
 export const SocketProvider = ({ children }) => {
     const [connected, setConnected] = useState(false)
     const [session] = useSession()
-    
-    const socketClient = new SocketClient(session?.access_token)
+
+    const socketClient = useMemo(() => new SocketClient(session?.access_token), [session?.access_token])
 
     useEffect(() => {
         socketClient.connect()
@@ -16,8 +16,8 @@ export const SocketProvider = ({ children }) => {
         socketClient.on("connect", () => setConnected(true))
         socketClient.on("disconnect", () => setConnected(false))
 
-        return () => socketClient.disconnect();
-    }, [])
+        return () => socketClient.disconnect()
+    }, [socketClient])
 
     return (
         <SocketContext.Provider value={{ socketClient, connected }}>

@@ -25,7 +25,6 @@ import {
     Minus,
     MessageCircle,
     MessageSquareShare,
-    CalendarCheck2,
     Calendar,
     Users,
     SendHorizontal,
@@ -58,17 +57,17 @@ export function Feed() {
     const [dateFrom, setDateFrom] = useState(undefined)
     const [dateTo, setDateTo] = useState(undefined)
 
-    const { data: posts } = useQuery({
-        queryKey: ['posts'],
-        queryFn: getPosts
-    })
+    // const { data: posts } = useQuery({
+    //     queryKey: ['posts'],
+    //     queryFn: getPosts
+    // })
 
     // const { data: user } = useQuery({
     //     queryKey: ['users'],
     //     queryFn: () => getUser({userId: ""})
     // })
     
-    console.log(posts)
+    // console.log(posts)
     // console.log(user)
 
     function handlePreviewMessage(){
