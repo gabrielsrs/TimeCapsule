@@ -1,10 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
 
 const userService = require('../services/user.js');
-<<<<<<< Updated upstream
-=======
 const tokenData = require("../util/tokenData.js")
->>>>>>> Stashed changes
 
 
 module.exports = {

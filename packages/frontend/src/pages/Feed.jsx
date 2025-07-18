@@ -25,7 +25,6 @@ import {
     Minus,
     MessageCircle,
     MessageSquareShare,
-    CalendarCheck2,
     Calendar,
     Users,
     SendHorizontal,
@@ -36,6 +35,9 @@ import {
     ChevronLeft,
     Check
 } from "lucide-react"
+
+import { useSocket } from "../context/SocketProvider.jsx"
+import { useSession } from "../context/SessionProvider.jsx"
 
 export function Feed() {
     const [feedQuantity, setFeedQuantity] = useState(0)
@@ -52,24 +54,45 @@ export function Feed() {
     ])
     const [selectedSearchedUsers, setSelectedSearchedUsers] = useState([])
     const [mediaLink, setMediaLink] = useState(false)
-    const [mediaLinkList,   ] = useState([{link: "test", state: false}, {link: "test", state: false}, {link: "test", state: false}, {link: "test", state: false}])
+    const [mediaLinkList, setMediaLinkList] = useState([{link: "test", state: false}, {link: "test", state: false}, {link: "test", state: false}, {link: "test", state: false}])
+        const [postsData, setPostsData] = useState([
+        {id: "123"},
+        {id: "321"},
+        {id: "345"},
+        {id: "565"},
+        {id: "232"},
+        {id: "462"},
+        {id: "987"},
+        {id: "656"},
+    ])
     const [postContent, setPostContent] = useState(false)
+    const [messages, setMessages] = useState([])
     const [postMessage, setPostMessage] = useState(false)
     const [dateFrom, setDateFrom] = useState(undefined)
     const [dateTo, setDateTo] = useState(undefined)
+    const [session, user] = useSession()
+    const { socketClient } = useSocket()
 
-    const { data: posts } = useQuery({
-        queryKey: ['posts'],
-        queryFn: getPosts
-    })
+    
+
+    // const { data: posts } = useQuery({
+    //     queryKey: ['posts'],
+    //     queryFn: getPosts
+    // })
 
     // const { data: user } = useQuery({
     //     queryKey: ['users'],
     //     queryFn: () => getUser({userId: ""})
     // })
     
-    console.log(posts)
+    // console.log(posts)
     // console.log(user)
+
+    useEffect(() => {   
+            socketClient.onMessage(messageObj => setMessages(previousMessages => [...previousMessages, messageObj]))
+            // Optionally clean up listener
+            return () => socketClient.off("status", console.log)
+        }, [])
 
     function handlePreviewMessage(){
         setPreviewMessage(!previewMessage)
@@ -98,6 +121,16 @@ export function Feed() {
     useEffect(() => {
         recipients != "Share" && setSharePost(false)
     },[recipients])
+
+    function sendMessage(event) {
+        const inputMessage = event.target.closest("div").firstChild
+        const message = inputMessage.value.trim()
+
+        if(message){
+            socketClient.emitMessage({postId: "123", message: message})
+            inputMessage.value = ""
+        }
+    }
 
     function blockText(event, max=0) {
         const el = event.currentTarget
@@ -162,6 +195,13 @@ export function Feed() {
                 setSelectedSearchedUsers(selectedUsers => selectedUsers.filter(user => user.id != event.target.id))
             }
         }
+    }
+
+    function handlePostContentView(event) {
+        const postId = event.currentTarget.id
+
+        const target = postContent.postId == postId
+        setPostContent({ open: !target,  postId: !target && postId })
     }
 
     return (
@@ -328,16 +368,181 @@ export function Feed() {
                     <span className="w-6"></span>
                 </div>
                 <Separator className="my-2"/>
-                <div>
-                    <div className="flex items-center gap-2 cursor-pointer" onClick={()  => setPostContent(!postContent)}>
+
+                {postsData.map(postData => {
+                    const isThisPostOpen = postContent.open && postData.id == postContent.postId
+                    return (
+                        <div key={postData.id}>
+                            <div id={postData.id} className="flex items-center gap-2 cursor-pointer" onClick={event  => handlePostContentView(event)}>
+                                <div className="flex flex-col flex-5 items-start">
+                                    <div className="flex items-center">
+                                        <div className="bg-palette-dark-slate left-0 size-1.5 mr-2.5"></div>
+                                        <span title={isThisPostOpen && "9:33:39 PM"}>2025-07-11</span>
+                                    </div>
+                                    {isThisPostOpen && (<span className="ml-4">9:33:39 PM</span>)}
+                                </div>
+                                <div className={`flex-20 items-center ${!isThisPostOpen && "truncate"}`}>
+                                    <span className="text-2xl font-normal ">Neque porro quisquam est qui dolorem </span>
+                                </div>
+                                <div className="flex-4 items-center">
+                                    <span className="bg-palette-grey/10 text-sm border border-palette-grey/30 py-0.5 px-1 rounded-sm">Personal</span>
+                                </div>
+                                <div className="flex-6">
+                                    <span>@Hedigar</span>
+                                </div>
+                                <div className="right-0 ml-2">
+                                    {isThisPostOpen ? <Minus size={16}/>: <Plus size={16}/>}
+                                </div>
+                            </div>
+                            {isThisPostOpen && (
+                                <div className="flex gap-2 mt-4">
+                                    <div className="flex-25">
+                                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus iaculis risus et sem interdum vestibulum. Duis tristique felis sed est tincidunt lacinia. Vivamus porta lacinia magna, sed faucibus nulla egestas sed. Vivamus commodo, eros vitae laoreet convallis, diam felis efficitur arcu, a malesuada lorem urna eu sapien. Fusce mattis elit.</p>
+                                        <div></div>
+                                        {session && isThisPostOpen && postMessage && (
+                                            <div>
+                                                <Separator className="my-2"/>
+                                                <div className="h-48 flex flex-col-reverse overflow-y-auto">
+                                                    {messages.map((message, index) => {
+                                                        return (
+                                                            <div key={index} className={`w-fit max-w-[80%] flex-col ${message.userId == user.id && "self-end"}`}>
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">20</span>
+                                                                    <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">{ message.name }</span>
+                                                                </div>
+                                                                <div className="w-fit px-2.5 border-x-[0.15rem] border-palette-dark-slate">
+                                                                    <p>{ message.message }</p>
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    })}
+
+                                                    <div className="w-fit max-w-[80%] flex-col">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">20</span>
+                                                            <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
+                                                        </div>
+                                                        <div className="w-fit px-2.5 border-x-[0.15rem] border-palette-dark-slate">
+                                                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit adipiscing elit. Phasellus iaculis risus et sem interdum vestibulum. Duis tristique felis sed est tincidunt lacinia. Vivamus porta lacinia ma.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="w-fit max-w-[80%] flex-col self-end">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">21</span>
+                                                            <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
+                                                        </div>
+                                                        <div className="w-fit px-2.5 border-x-2 border-palette-dark-slate">
+                                                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit adipiscing elit. Phasellus iaculis risus et sem interdum vestibulum. Duis tristique felis sed est tincidunt lacinia. Vivamus porta lacinia ma.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="w-fit flex-col">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">22</span>
+                                                            <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
+                                                        </div>
+                                                        <div className="w-fit px-2.5 border-x-2 border-palette-dark-slate">
+                                                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="w-fit flex-col">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">23</span>
+                                                            <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
+                                                        </div>
+                                                        <div className="w-fit px-2.5 border-x-2 border-palette-dark-slate">
+                                                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="w-fit flex-col">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">24</span>
+                                                            <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
+                                                        </div>
+                                                        <div className="w-fit px-2.5 border-x-2 border-palette-dark-slate">
+                                                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="w-fit flex-col">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">25</span>
+                                                            <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
+                                                        </div>
+                                                        <div className="w-fit px-2.5 border-x-2 border-palette-dark-slate">
+                                                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="w-fit flex-col">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">26</span>
+                                                            <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
+                                                        </div>
+                                                        <div className="w-fit px-2.5 border-x-2 border-palette-dark-slate">
+                                                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="h-11 flex justify-end items-center relative mt-2">
+                                                    <Input className="pr-14 absolute" placeholder="Send your message"/>
+                                                    <span title="Publish message" className="z-1" onClick={event => sendMessage(event)}><SendHorizontal className="cursor-pointer mr-1"/></span>
+                                                    <span title="Publish message" className="z-1"><DateMessage /></span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col flex-10 justify-start">
+                                        <div className="flex justify-between">
+                                            <div className="flex items-center gap-1 mr-1">
+                                                <span className="select-none" title="Message"  onClick={() => setPostMessage(!postMessage)}><MessageCircle size={18} className="cursor-pointer"/></span>
+                                                <span title="Go to chat"><MessageSquareShare size={18} className="cursor-pointer"/></span>
+                                                <span title="Edit"><SquarePen size={18} className="cursor-pointer"/></span>
+                                                <span title="Remove"><Trash2 size={18} className="cursor-pointer"/></span>
+                                            </div>
+                                            <div className="flex items-center">
+                                                <span className="px-1 max-w-48 truncate" title="">Hedigar</span>
+                                                <img className="size-8 bg-palette-dark-slate rounded-3xl p-0.5" src="" alt="" /> {/* user-picture */}
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-sm pr-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Unpublish date</span>
+                                            <span className="pr-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:right-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0">2025-07-11 9:33:39 PM</span>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-sm pr-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Users</span>
+                                            <div className="pr-2.5 border-r-2 border-palette-dark-slate">
+                                                <Badge className="mr-0.5">Gabriel Souza</Badge>
+                                                <Badge className="mr-0.5">Gabriel Reiz</Badge>
+                                                <Badge className="mr-0.5">Gar</Badge>
+                                                <Badge className="mr-0.5">GaRReiz</Badge>
+                                                <Badge className="mr-0.5">Hyuru</Badge>
+                                                <Badge className="mr-0.5">Rayna</Badge>
+                                                <Badge className="mr-0.5">Angelico del Monte Pereira Santos</Badge>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span className="w-6"></span>
+                                </div>
+                            )}
+                            <Separator className="my-2"/>
+                        </div>
+                    )
+                })}
+
+                {/* <div>
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={event  => handlePostContentView(event)}>
                         <div className="flex flex-col flex-5 items-start">
                             <div className="flex items-center">
                                 <div className="bg-palette-dark-slate left-0 size-1.5 mr-2.5"></div>
-                                <span title={!postContent && "9:33:39 PM"}>2025-07-11</span>
+                                <span title={!postContent.open && "9:33:39 PM"}>2025-07-11</span>
                             </div>
-                            {postContent && (<span className="ml-4">9:33:39 PM</span>)}
+                            {postContent.open && (<span className="ml-4">9:33:39 PM</span>)}
                         </div>
-                        <div className={`flex-20 items-center ${!postContent && "truncate"}`}>
+                        <div className={`flex-20 items-center ${!postContent.open && "truncate"}`}>
                             <span className="text-2xl font-normal ">Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit</span>
                         </div>
                         <div className="flex-4 items-center">
@@ -347,7 +552,7 @@ export function Feed() {
                             <span>@Hedigar</span>
                         </div>
                         <div className="right-0 ml-2">
-                            {postContent ? <Minus size={16}/>: <Plus size={16}/>}
+                            {postContent.open ? <Minus size={16}/>: <Plus size={16}/>}
                         </div>
                     </div>
                     <div className="flex mt-4">
@@ -358,152 +563,9 @@ export function Feed() {
                         <span className="w-6"></span>
                     </div>
                 </div>
-                <Separator className="my-2"/>
+                <Separator className="my-2"/> */}
 
-                <div>
-                    <div className="flex items-center gap-2 cursor-pointer" onClick={()  => setPostContent(!postContent)}>
-                        <div className="flex flex-col flex-5 items-start">
-                            <div className="flex items-center">
-                                <div className="bg-palette-dark-slate left-0 size-1.5 mr-2.5"></div>
-                                <span title={!postContent && "9:33:39 PM"}>2025-07-11</span>
-                            </div>
-                            {postContent && (<span className="ml-4">9:33:39 PM</span>)}
-                        </div>
-                        <div className={`flex-20 items-center ${!postContent && "truncate"}`}>
-                            <span className="text-2xl font-normal ">Neque porro quisquam est qui dolorem </span>
-                        </div>
-                        <div className="flex-4 items-center">
-                            <span className="bg-palette-grey/10 text-sm border border-palette-grey/30 py-0.5 px-1 rounded-sm">Personal</span>
-                        </div>
-                        <div className="flex-6">
-                            <span>@Hedigar</span>
-                        </div>
-                        <div className="right-0 ml-2">
-                            {postContent ? <Minus size={16}/>: <Plus size={16}/>}
-                        </div>
-                    </div>
-                    {postContent && (
-                        <div className="flex gap-2 mt-4">
-                            <div className="flex-25">
-                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus iaculis risus et sem interdum vestibulum. Duis tristique felis sed est tincidunt lacinia. Vivamus porta lacinia magna, sed faucibus nulla egestas sed. Vivamus commodo, eros vitae laoreet convallis, diam felis efficitur arcu, a malesuada lorem urna eu sapien. Fusce mattis elit.</p>
-                                <div></div>
-                                {postMessage && (
-                                    <div>
-                                        <Separator className="my-2"/>
-                                        <div className="h-48 flex flex-col-reverse overflow-y-auto">
-                                            <div className="w-fit max-w-[80%] flex-col">
-                                                <div className="flex justify-between">
-                                                    <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">20</span>
-                                                    <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
-                                                </div>
-                                                <div className="w-fit px-2.5 border-x-[0.15rem] border-palette-dark-slate">
-                                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit adipiscing elit. Phasellus iaculis risus et sem interdum vestibulum. Duis tristique felis sed est tincidunt lacinia. Vivamus porta lacinia ma.</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="w-fit max-w-[80%] flex-col self-end">
-                                                <div className="flex justify-between">
-                                                    <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">21</span>
-                                                    <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
-                                                </div>
-                                                <div className="w-fit px-2.5 border-x-2 border-palette-dark-slate">
-                                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit adipiscing elit. Phasellus iaculis risus et sem interdum vestibulum. Duis tristique felis sed est tincidunt lacinia. Vivamus porta lacinia ma.</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="w-fit flex-col">
-                                                <div className="flex justify-between">
-                                                    <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">22</span>
-                                                    <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
-                                                </div>
-                                                <div className="w-fit px-2.5 border-x-2 border-palette-dark-slate">
-                                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="w-fit flex-col">
-                                                <div className="flex justify-between">
-                                                    <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">23</span>
-                                                    <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
-                                                </div>
-                                                <div className="w-fit px-2.5 border-x-2 border-palette-dark-slate">
-                                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="w-fit flex-col">
-                                                <div className="flex justify-between">
-                                                    <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">24</span>
-                                                    <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
-                                                </div>
-                                                <div className="w-fit px-2.5 border-x-2 border-palette-dark-slate">
-                                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="w-fit flex-col">
-                                                <div className="flex justify-between">
-                                                    <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">25</span>
-                                                    <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
-                                                </div>
-                                                <div className="w-fit px-2.5 border-x-2 border-palette-dark-slate">
-                                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="w-fit flex-col">
-                                                <div className="flex justify-between">
-                                                    <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">26</span>
-                                                    <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
-                                                </div>
-                                                <div className="w-fit px-2.5 border-x-2 border-palette-dark-slate">
-                                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="h-11 flex justify-end items-center relative mt-2">
-                                            <Input className="pr-14 absolute" placeholder="Send your message"/>
-                                            <span title="Publish message" className="z-1"><SendHorizontal className="cursor-pointer mr-1"/></span>
-                                            <span title="Publish message" className="z-1"><DateMessage /></span>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex flex-col flex-10 justify-start">
-                                <div className="flex justify-between">
-                                    <div className="flex items-center gap-1 mr-1">
-                                        <span className="select-none" title="Message"  onClick={() => setPostMessage(!postMessage)}><MessageCircle size={18} className="cursor-pointer"/></span>
-                                        <span title="Go to chat"><MessageSquareShare size={18} className="cursor-pointer"/></span>
-                                        <span title="Edit"><SquarePen size={18} className="cursor-pointer"/></span>
-                                        <span title="Remove"><Trash2 size={18} className="cursor-pointer"/></span>
-                                    </div>
-                                    <div className="flex items-center">
-                                        <span className="px-1 max-w-48 truncate" title="">Hedigar</span>
-                                        <img className="size-8 bg-palette-dark-slate rounded-3xl p-0.5" src="" alt="" /> {/* user-picture */}
-                                    </div>
-                                </div>
-                                <div className="flex flex-col items-end">
-                                    <span className="text-sm pr-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Unpublish date</span>
-                                    <span className="pr-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:right-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0">2025-07-11 9:33:39 PM</span>
-                                </div>
-                                <div className="flex flex-col items-end">
-                                    <span className="text-sm pr-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Users</span>
-                                    <div className="pr-2.5 border-r-2 border-palette-dark-slate">
-                                        <Badge className="mr-0.5">Gabriel Souza</Badge>
-                                        <Badge className="mr-0.5">Gabriel Reiz</Badge>
-                                        <Badge className="mr-0.5">Gar</Badge>
-                                        <Badge className="mr-0.5">GaRReiz</Badge>
-                                        <Badge className="mr-0.5">Hyuru</Badge>
-                                        <Badge className="mr-0.5">Rayna</Badge>
-                                        <Badge className="mr-0.5">Angelico del Monte Pereira Santos</Badge>
-                                    </div>
-                                </div>
-                            </div>
-                            <span className="w-6"></span>
-                        </div>
-                    )}
-                </div>
-                <Separator className="my-2"/>
+                
             </div>
         </div>
     )
