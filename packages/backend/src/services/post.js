@@ -31,7 +31,7 @@ module.exports = {
 
         return post
     },
-    async getPostsService(){
+    async getPostsService({ userId }){
         // validate recipients, ...
         const posts = await postRepository.getPostsRepository();
 

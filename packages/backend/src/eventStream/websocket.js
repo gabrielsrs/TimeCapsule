@@ -4,10 +4,16 @@ const { tokenDataFromSocket } = require("../util/tokenData.js")
 module.exports = function setupWebSocket(server){
     const io = new Server(server, {
         cors: {
+<<<<<<< Updated upstream
             origin: "http://localhost:3000",
             credentials: true,
         },
     })
+=======
+            origin: "http://127.0.0.1:3000"
+        }
+    });
+>>>>>>> Stashed changes
 
     io.on("connection", socket => {
         socket.on("enterPostChat", postId => { // use computeUserIdFromHeaders to userId

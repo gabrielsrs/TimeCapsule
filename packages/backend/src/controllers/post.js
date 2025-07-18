@@ -3,6 +3,10 @@ const { StatusCodes } = require('http-status-codes');
 const has = require('has-keys');
 
 const postService = require('../services/post.js');
+<<<<<<< Updated upstream
+=======
+const tokenData = require("../util/tokenData.js")
+>>>>>>> Stashed changes
 
 
 module.exports = {
@@ -16,12 +20,20 @@ module.exports = {
         res.status(StatusCodes.OK).json({status: true, message: 'Returning post', post});
     },
     async getPosts(req, res){
-        const posts = await postService.getPostsService();
+
+        let userId
+        try  {
+            userId = tokenData.tokenDataFromRequest(res.cookies.session_token, "sub")
+        } catch(err) {}
+
+        const posts = await postService.getPostsService({ userId });
 
         res.status(StatusCodes.OK).json({status: true, message: 'Returning posts', posts});
     },
     async newPost(req, res){
         const data = req.body;
+
+        const userId = tokenData.tokenDataFromRequest(res.cookies.session_token, "sub")
         
         await postService.create({userId, data});
 
