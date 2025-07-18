@@ -7,7 +7,7 @@ const postRepository = require('../repositories/post.js');
 const postSchema = z.object({
     title: z.string().min(4).max(80),
     content: z.string().max(2000).optional(),
-    mediaUrls: z.array(z.url()).optional().pipe(
+    mediaUrls: z.array(z.string().url()).optional().pipe(
         z.transformer(val => JSON.stringify(val))
     ),
     published: z.boolean().optional().default(false),
@@ -31,7 +31,7 @@ module.exports = {
 
         return post
     },
-    async getPostsService(){
+    async getPostsService({ userId }){
         // validate recipients, ...
         const posts = await postRepository.getPostsRepository();
 

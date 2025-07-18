@@ -1,20 +1,36 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DateMessage } from '../components/DateMessage.jsx'
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import {
     SendHorizontal,
-    CalendarCheck2,
     Plus,
     Minus,
     Search,
 } from "lucide-react"
+import { useSocket } from "../context/SocketProvider.jsx"
 
 export function Chat() {
     const [chatQuantity, setChatQuantity] = useState(0)
     const [postContent, setPostContent] = useState(false)
     
+    const { socketClient } = useSocket()
+
+    useEffect(() => {
+        socketClient.emitStatus()
+        socketClient.onStatus(status => console.log(status))
+        // Optionally clean up listener
+        return () => socketClient.off("status", console.log)
+    }, [])
+
+    function sendMessage(event) {
+        const message = event.target.closest("div").firstChild.value.trim()
+
+        if(message){
+            socketClient.emitMessage({postId: "123", message: message})
+        }
+    }
     
     return (
         <div className="h-screen grid grid-cols-18 grid-rows-[auto_1fr] gap-4 pt-12 p-4">
@@ -131,7 +147,7 @@ export function Chat() {
                             </div>
                             <div className="h-11 flex justify-end items-center relative mt-2">
                                 <Input className="h-14 pr-22 absolute" placeholder="Send your message"/>
-                                <span title="Send" className="z-1"><SendHorizontal className="cursor-pointer mr-4"/></span>
+                                <span title="Send" className="z-1 p-1 mr-1 cursor-pointer select-none" onClick={event => sendMessage(event)}><SendHorizontal/></span>
                                 <span title="Publish message" className="z-1"><DateMessage /></span>
                             </div>
                         </div>

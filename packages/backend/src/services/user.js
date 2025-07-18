@@ -6,7 +6,7 @@ module.exports = {
         const validateUserExistence = await userRepository.getUserByIdRepository({ userId })
 
         if (validateUserExistence) {
-            throw {code: status.BAD_REQUEST, message: 'User already created'};
+            return {status: false, message: "User already created"}
         }
 
         const user = await userRepository.newUserRepository({ userId });

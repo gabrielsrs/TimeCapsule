@@ -20,7 +20,7 @@ export function AuthCallback() {
 
       // Send access_token to backend
       createUser({ token: session.access_token })
-        .then()
+        .then(res => console.log(res))
         .catch(async error => {
           console.error("Auth error:", error)
 

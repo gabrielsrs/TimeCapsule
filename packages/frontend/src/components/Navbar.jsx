@@ -1,5 +1,4 @@
-import { Session } from "../App"
-import { useContext } from "react"
+import { useSession } from "../context/SessionProvider.jsx"
 // import { Button } from "./Button";
 import { Button } from "@/components/ui/button"
 import { supabase } from "../utils/supabase-client.js"
@@ -9,7 +8,7 @@ import { Link } from "react-router";
 
 
 export function Navbar() {
-    const [session] = useContext(Session)
+    const [session] = useSession()
 
     async function handleLogin() {
         await supabase.auth.signInWithOAuth({
