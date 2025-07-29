@@ -1,14 +1,16 @@
+const { prisma } = require("./prismaClient")
+
 module.exports = {
-    async getUserByIdRepository({ id }){
+    async getUserByIdRepository({ authId }){
         const user = await prisma.user.findUnique({
-            where: { id },
+            where: { authId },
         })
 
         return user
     },
-    async newUserRepository({ userId }){
+    async newUserRepository({ authId }){
         const user = await prisma.user.create({
-            data: {userId},
+            data: { authId },
         })
 
         return user

@@ -1,12 +1,24 @@
 const { StatusCodes } = require('http-status-codes');
 
-const userService = require('../services/users.js');
+const userService = require('../services/user.js');
+const tokenData = require("../util/tokenData.js")
 
 
 module.exports = {
     async newUser(req, res){
-        await userService.newUserService({ userId });
+        const userId = await tokenData.tokenDataFromRequestHeader(req.headers.authorization, "sub")
+        const createUser = await userService.newUserService({ userId });
 
-        res.status(StatusCodes.CREATED).json({status: true, message: 'User Added'});
+        let message
+        createUser.status == false && (message = createUser.message)
+
+        res.cookie("session_token", await tokenData.token(req.headers.authorization), {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            maxAge: 3600 * 1000
+        });
+
+        res.status(StatusCodes.CREATED).json({status: true, message: message || 'User Added'});
     }
 }

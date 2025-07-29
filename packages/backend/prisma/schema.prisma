@@ -12,12 +12,12 @@ datasource db {
 }
 
 model User {
-  id       Int       @id @default(autoincrement())
-  authId   String    @unique
-  posts    Post[]    @relation("AuthorPost")
-  messages Message[]
-  Post     Post?     @relation(fields: [postId], references: [id])
-  postId   Int?
+  id       Int        @id @default(autoincrement())
+  authId   String     @unique
+  posts    Post[]     @relation("AuthorPost")
+  messages Message[]  @relation("UserMessages")
+  postsIn  Post[]     @relation("UserShares")
+  metadata Metadata[] @relation("UserMetadata")
 }
 
 model Post {
@@ -36,8 +36,9 @@ model Post {
   author         User       @relation("AuthorPost", fields: [authorId], references: [authId])
   authorId       String
   recipients     Recipients @default(PERSONAL)
-  shareTo        User[]
-  messages       Message[]
+  shareTo        User[]     @relation("UserShares")
+  messages       Message[]  @relation("PostMessages")
+  metadata       Metadata[] @relation("PostMetadata")
 }
 
 model Message {
@@ -48,10 +49,23 @@ model Message {
   deleted     Boolean   @default(false)
   deletedDate DateTime?
   createdAt   DateTime  @default(now())
-  user        User      @relation(fields: [userId], references: [authId])
+  user        User      @relation("UserMessages", fields: [userId], references: [authId])
   userId      String
-  post        Post      @relation(fields: [postId], references: [id])
+  post        Post      @relation("PostMessages", fields: [postId], references: [id])
   postId      Int
+}
+
+model Metadata {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation("UserMetadata", fields: [userId], references: [authId])
+  userId        String
+  post          Post     @relation("PostMetadata", fields: [postId], references: [id])
+  postId        Int
+  messagesCount Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, postId])
 }
 
 enum Recipients {

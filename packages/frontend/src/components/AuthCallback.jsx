@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate  } from "react-router"; // Or `useRouter` in Next.js
+import { useNavigate  } from "react-router";
 import { supabase } from "../utils/supabase-client.js";
 import { createUser } from "../utils/fetch-data.js"
 
@@ -20,7 +20,7 @@ export function AuthCallback() {
 
       // Send access_token to backend
       createUser({ token: session.access_token })
-        .then()
+        .then(res => console.log(res))
         .catch(async error => {
           console.error("Auth error:", error)
 

@@ -1,3 +1,5 @@
+const { prisma } = require("./prismaClient")
+
 module.exports = {
     async getMessageByIdRepository({ id }){
         const message = await prisma.message.findUnique({

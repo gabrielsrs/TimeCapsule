@@ -1,7 +1,6 @@
-import { useState, useEffect, createContext } from "react";
-import { supabase } from "./utils/supabase-client.js"
+import { SessionProvider } from "./context/SessionProvider.jsx"
+import { SocketProvider } from "./context/SocketProvider.jsx"
 import { Navbar } from "./components/Navbar.jsx";
-import { Header } from "./components/Header.jsx"
 import { Feed } from "./pages/Feed.jsx"
 import { Chat } from "./pages/Chat.jsx"
 import { AuthCallback } from "./components/AuthCallback.jsx"
@@ -11,39 +10,25 @@ import {
   QueryClientProvider,
 } from '@tanstack/react-query'
 
-const Session = createContext()
 const queryClient = new QueryClient()
 
-function App() {
-  const [session, setSession] = useState(null)
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-    console.log("test")
-    return () => subscription.unsubscribe()
-  }, [])
+export function App() {
 
   return (
-    <Session.Provider value={[session, setSession]}>
-      <QueryClientProvider client={queryClient}>
-        <div className="flex flex-col min-h-screen max-w-[1728px] m-auto">
-          <Navbar/>
-          <Routes>
-            <Route index element={<Feed />} />
-            <Route path="/feed" element={<Feed />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-          </Routes>
-        </div>
-      </QueryClientProvider>
-    </Session.Provider>
+    <SessionProvider>
+      <SocketProvider>
+        <QueryClientProvider client={queryClient}>
+          <div className="flex flex-col min-h-screen max-w-[1728px] m-auto">
+            <Navbar/>
+            <Routes>
+              <Route index element={<Feed />} />
+              <Route path="/feed" element={<Feed />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+            </Routes>
+          </div>
+        </QueryClientProvider>
+      </SocketProvider>
+    </SessionProvider>
   )
 }
-
-export { App, Session }
