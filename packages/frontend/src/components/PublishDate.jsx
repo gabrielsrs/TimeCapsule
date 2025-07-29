@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDownIcon, CalendarCheck2, CalendarX2 } from "lucide-react"
+import { CalendarCheck2, CalendarX2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -13,15 +13,21 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-export function PublishDate() {
+export function PublishDate({ dates: {
+  publishDatetime,
+  setPublishDatetime,
+  unpublishDatetime,
+  setUnpublishDatetime
+} }) {
   const [publishOpen, setPublishOpen] = useState(false)
   const [unpublishOpen, setUnpublishOpen] = useState(false)
   const [open, setOpen] = useState(false)
-  const [publishDate, setPublishDate] = useState(undefined)
-  const [unpublishDate, setUnpublishDate] = useState(undefined)
 
   const today = new Date()
-  today.setDate(today.getDate() + 1)
+  today.setHours(0)
+  today.setMinutes(0)
+  today.setSeconds(0)
+  today.setMilliseconds(0)
 
   return (
     <div className="flex gap-1 select-none">
@@ -43,13 +49,13 @@ export function PublishDate() {
                 <span className="px-4 mb-2 font-mono">Publish Date</span>
                 <Calendar
                     mode="single"
-                    selected={publishDate}
+                    selected={publishDatetime.date}
                     captionLayout="dropdown"
                     onSelect={(date) => {
-                      setPublishDate(date)
+                      setPublishDatetime(previous => ({date: date, time: previous.time}))
                     }}
                     disabled={(date) =>
-                      date < new Date() || unpublishDate && date >= unpublishDate
+                      date < today || unpublishDatetime.date && date >= unpublishDatetime.date
                     }
                     className="select-none"
                 />
@@ -58,6 +64,9 @@ export function PublishDate() {
                     id="time-picker-publish"
                     step="1"
                     defaultValue="00:00:00"
+                    onChange={(time) => {
+                      setPublishDatetime(previous => ({date: previous.date, time: time.target.value}))
+                    }}
                     className="mx-4 w-auto bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none select-none"
                     />
             </div>
@@ -68,13 +77,13 @@ export function PublishDate() {
                 <span className="px-4 mb-2 font-mono">Unpublish Date</span>
                 <Calendar
                     mode="single"
-                    selected={unpublishDate}
+                    selected={unpublishDatetime.date}
                     captionLayout="dropdown"
                     onSelect={(date) => {
-                      setUnpublishDate(date)
+                      setUnpublishDatetime(previous => ({date: date, time: previous.time}))
                     }}
                     disabled={(date) =>
-                      date < today || publishDate && date <= publishDate
+                      date <= today || publishDatetime.date && date <= publishDatetime.date
                     }
                     className="select-none"
                 />
@@ -83,6 +92,9 @@ export function PublishDate() {
                     id="time-picker-unpublish"
                     step="1"
                     defaultValue="00:00:00"
+                    onChange={(time) => {
+                      setUnpublishDatetime(previous => ({date: previous.date, time: time.target.value}))
+                    }}
                     className="mx-4 w-auto bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none select-none"
                     />
             </div>

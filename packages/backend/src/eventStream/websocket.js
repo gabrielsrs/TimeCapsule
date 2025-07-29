@@ -1,5 +1,6 @@
 const { Server } = require("socket.io");
 const { tokenDataFromSocket } = require("../util/tokenData.js")
+const { updateMetadataService } = require("../services/metadata.js")
 
 module.exports = function setupWebSocket(server){
     const io = new Server(server, {
@@ -22,7 +23,7 @@ module.exports = function setupWebSocket(server){
             }
 
             if(addRoom) {
-                socket.join(postId)
+                socket.join(Number(postId))
             }
 
             // load messages
@@ -31,6 +32,8 @@ module.exports = function setupWebSocket(server){
         socket.on("message", async messageObj => {
             // validations if user in in this post
             // validate if is message with publish date
+            const sockets = await io.in(messageObj.postId).fetchSockets();
+
 
             const data = await tokenDataFromSocket(socket)
 

@@ -11,8 +11,21 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-export function DateFilter({ text, date, setDate, align }){
+export function DateFilter({ text, filter, setDateFilter, align }){
   const [open, setOpen] = useState(false)
+
+  const dateTarget = text.toLowerCase()
+  const isDate = filter.filter(item => Object.keys(item)[0] == dateTarget)[0]
+  const date = isDate && new Date(isDate[dateTarget])
+  
+  function handleDateChange(date) {
+    setDateFilter(previousFilter => {
+      const newFIlter = previousFilter.filter(item => Object.keys(item)[0] != dateTarget)
+      setOpen(false)
+
+      return [ ...newFIlter, {[dateTarget]: date.toISOString()} ]
+    })
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -35,10 +48,7 @@ export function DateFilter({ text, date, setDate, align }){
             mode="single"
             selected={date}
             captionLayout="dropdown"
-            onSelect={(date) => {
-              setDate(date)
-              setOpen(false)
-            }}
+            onSelect={date => handleDateChange(date)}
           />
         </PopoverContent>
       </Popover>

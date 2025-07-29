@@ -2,16 +2,17 @@ const { connect } = require("../routes/post")
 const { prisma } = require("./prismaClient")
 
 module.exports = {
-    async getPostByIdRepository({ id }){
+    async getPostByIdRepository({ filter }){
         const post = await prisma.post.findUnique({
-            where: { id },
+            where: filter
         })
 
         return post
     },
-    async getPostsRepository(){
-        // add where
-        const posts = await prisma.post.findMany()
+    async getPostsRepository({ filter }){
+        const posts = await prisma.post.findMany({ 
+            where: filter
+        })
 
         return posts
     },
@@ -19,7 +20,8 @@ module.exports = {
         userId,
         title,
         content,
-        publish,
+        mediaUrls,
+        published,
         publishDate,
         unpublish,
         unpublishDate,
@@ -32,7 +34,8 @@ module.exports = {
             data: {
                 title,
                 content,
-                publish,
+                mediaUrls,
+                published,
                 publishDate,
                 unpublish,
                 unpublishDate,
@@ -41,7 +44,7 @@ module.exports = {
                 authorId: userId,
                 recipients,
                 shareTo: {
-                    connect: shareTo.map(userId => { id: userId })
+                    connect: shareTo.map(userId => { authId: userId })
                 }
             },
         })

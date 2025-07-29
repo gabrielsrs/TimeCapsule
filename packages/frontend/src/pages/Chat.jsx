@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react"
+import { useQuery, useMutation } from '@tanstack/react-query'
+import { getPost, getMetadata } from "../utils/fetch-data.js"
 import { DateMessage } from '../components/DateMessage.jsx'
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -15,48 +17,91 @@ import { useSession } from "../context/SessionProvider.jsx"
 export function Chat() {
     const [chatQuantity, setChatQuantity] = useState(0)
     const [postContent, setPostContent] = useState(false)
-    const [postsData, setPostsData] = useState([
-        {id: "123"},
-        {id: "321"},
-        {id: "345"},
-        {id: "565"},
-        {id: "232"},
-        {id: "462"},
-        {id: "987"},
-        {id: "656"},
-    ])
+    // const [postsData, setPostsData] = useState([
+    //     {id: "123"},
+    //     {id: "321"},
+    //     {id: "345"},
+    //     {id: "565"},
+    //     {id: "232"},
+    //     {id: "462"},
+    //     {id: "987"},
+    //     {id: "656"},
+    // ])
     const [messages, setMessages] = useState([])
     const [session, user] = useSession()
     
     const { socketClient } = useSocket()
 
-    useEffect(() => {
-        socketClient.emitStatus()
-        socketClient.onStatus(status => console.log(status))
+    const { data: metadata, isSuccess: successMetadata } = useQuery({
+        queryKey: ["metadata"],
+        queryFn: getMetadata
+    })
 
-        socketClient.onMessage(messageObj => setMessages(previousMessages => [...previousMessages, messageObj]))
-        // Optionally clean up listener
-        return () => socketClient.off("status", console.log)
-    }, [])
+    async function getPostById() {
+        const posts = await Promise.all(
+            metadata.metadata.map(item => getPost(item.postId))
+        );
+        return posts;
+    }
+    // see posiblitity to make a list of ids and send then as query params
+    const { data: postsData, isSuccess: successPost } = useQuery({
+        queryKey: ["postMetadata"],
+        queryFn: getPostById,
+        enabled: successMetadata
+    })
+    
+    const handleMessage = (messageObj) => {
+        setMessages(previousMessages => [...previousMessages, messageObj]);
+    }
+
+    // useEffect(() => {
+    //     socketClient.emitStatus()
+    //     socketClient.onStatus(status => console.log(status))
+
+    //     socketClient.onMessage(handleMessage)
+        
+    //     // Optionally clean up listener
+    //     return () => socketClient.off("message", handleMessage)
+    // }, [])
 
     function sendMessage(event) {
         const inputMessage = event.target.closest("div").firstChild
         const message = inputMessage.value.trim()
 
         if(message){
-            socketClient.emitMessage({postId: postContent.postId, message: message})
+            socketClient.emitMessage({postId: postContent.post.id, message: message})
             inputMessage.value = ""
         }
+    }
+
+    function date(dateTime) {
+        const date = `${dateTime.getFullYear()}-${dateTime.getMonth()}-${dateTime.getDate()}`
+
+        const hours = dateTime.getHours() >= 12? {hour: dateTime.getHours() - 12, meridiemPeriod: "PM"}: {hour: dateTime.getHours(), meridiemPeriod: "AM"}
+        const time = `${hours.hour}:${dateTime.getMinutes()}:${dateTime.getSeconds()} ${hours.meridiemPeriod}`
+
+        return {date, time}
     }
 
     function handlePostContentView(event) {
         const postId = event.currentTarget.id
         const content = event.currentTarget.lastChild.textContent
 
-        const target = postContent.postId == postId
-        setPostContent({ open: !target,  postId: !target && postId, text: content })
+        const target = postContent?.post?.id == postId
+        const targetPost = postsData.find(item => item.post.id == postId).post
+        targetPost.createDateTime = date(new Date(targetPost.createdAt.slice(0,-1)))
+        targetPost.publishDateTime = date(new Date(targetPost.publishDate.slice(0,-1)))
+        targetPost.unpublishDateTime = targetPost.unpublish && date(new Date(targetPost.unpublishDate.slice(0,-1)))
 
-        socketClient.enterPostChat(postId)
+        const targetMetadata = metadata.metadata.find(item => item.id == postId)
+        setPostContent({ open: !target,  post: !target && targetPost, text: content, metadata: targetMetadata  })
+
+        setMessages([])
+        if(!postContent || !target){
+            socketClient.enterPostChat(postId)  
+            socketClient.off("message")
+            socketClient.onMessage(handleMessage)
+        }
     }
     
     return (
@@ -71,7 +116,7 @@ export function Chat() {
                 </div>
                 <div className="text-xl/1 font-semibold ml-1">
                     <span>[ </span>
-                    <span className="text-base">{chatQuantity}</span>
+                    <span className="text-base">{successPost? postsData.length: 0}</span>
                     <span> ]</span>
                 </div>
             </div>
@@ -95,7 +140,7 @@ export function Chat() {
                                             </div>
                                         )
                                     })}
-                                    <div className="w-fit flex-col">
+                                    {/* <div className="w-fit flex-col">
                                         <div className="flex justify-between">
                                             <span className="text-sm pl-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">26</span>
                                             <span className="text-sm pr-5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:right-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:right-0 after:bottom-0">Hedigar</span>
@@ -183,7 +228,7 @@ export function Chat() {
                                         <div className="w-fit px-2.5 border-x-2 border-palette-dark-slate">
                                             <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
                                         </div>
-                                    </div>
+                                    </div> */}
                                     
                                 </div>
                                 <div className="h-11 flex justify-end items-center relative mt-2">
@@ -201,23 +246,27 @@ export function Chat() {
 
                 <div className={`${postContent.open && "max-h-[25vh]"} flex-1 flex flex-col-reverse overflow-y-auto`}>
                     <Separator className="my-2"/>
-                    {postsData.map(postData => {
-                        const isThisPostOpen = postContent.open && postData.id == postContent.postId
+                    {successPost && postsData.map(postResponse => {
+                        const postData = postResponse.post
+                        const isThisPostOpen = postContent.open && postData.id == postContent.post.postId
+                        const recipients = postData.recipients.slice(0,1) + postData.recipients.slice(1,).toLowerCase()
+                        const publishDateTime = date(new Date(postData.publishDate.slice(0,-1)))
+
                         return (
                             <>
                                 <div key={postData.id} id={postData.id} className="flex items-center cursor-pointer" onClick={event  => handlePostContentView(event)}>
                                     <div className="flex flex-col flex-5 items-start">
                                         <div className="flex items-center">
                                             <div className="bg-palette-dark-slate left-0 size-1.5 mr-2.5"></div>
-                                            <span title={!isThisPostOpen && "9:33:39 PM"}>2025-07-11</span>
+                                            <span title={!isThisPostOpen && publishDateTime.time}>{publishDateTime.date}</span>
                                         </div>
-                                        {isThisPostOpen && (<span className="ml-4">9:33:39 PM</span>)}
+                                        {isThisPostOpen && (<span className="ml-4">{publishDateTime.time}</span>)}
                                     </div>
                                     <div className={`flex-20 items-center ${!isThisPostOpen && "truncate"}`}>
-                                        <span className="text-2xl font-normal ">Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit</span>
+                                        <span className="text-2xl font-normal ">{postData.title}</span>
                                     </div>
                                     <div className="flex-4 items-center">
-                                        <span className="bg-palette-grey/10 text-sm border border-palette-grey/30 py-0.5 px-1 rounded-sm">Personal</span>
+                                        <span className="bg-palette-grey/10 text-sm border border-palette-grey/30 py-0.5 px-1 rounded-sm">{recipients}</span>
                                     </div>
                                     <div className="flex-6">
                                         <span>@Hedigar</span>
@@ -225,7 +274,7 @@ export function Chat() {
                                     <div className="right-0 ml-2">
                                         {isThisPostOpen ? <Minus size={16}/>: <Plus size={16}/>}
                                     </div>
-                                    <p className="hidden">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus iaculis risus et sem interdum vestibulum. Duis tristique felis sed est tincidunt lacinia. Vivamus porta lacinia magna, sed faucibus nulla egestas sed. Vivamus commodo, eros vitae laoreet convallis, diam felis efficitur arcu, a malesuada lorem urna eu sapien. Fusce mattis elit.</p>
+                                    <p className="hidden">{postData.content}</p>
                                 </div>
                                 <Separator className="my-2"/>
                             </>
@@ -247,61 +296,65 @@ export function Chat() {
                         <span title="search" className="z-1"><Search className="cursor-pointer mr-4"/></span>
                     </div>
                 </div>
-            </div>
+            </div> 
             <div className="min-h-24 h-fit flex flex-col col-span-5 p-2 border-2 rounded-2xl relative">
                 <div className="absolute top-[-14px] bg-white px-2 ml-4">Metadata</div>
-                <div className="flex justify-between items-center">
-                    <span className="truncate">Hedigar</span>
-                    <img className="size-8 bg-palette-dark-slate rounded-3xl p-0.5" src="" alt="" />
-                </div>
+                {postContent.open? (
+                    <>
+                        <div className="flex justify-between items-center">
+                            <span className="truncate">Hedigar</span>
+                            <img className="size-8 bg-palette-dark-slate rounded-3xl p-0.5" src="" alt="" />
+                        </div>
 
-                <div className="flex flex-col">
-                    <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Send in chat</span>
-                    <span className="pl-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:left-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0">425 Messages</span>
-                </div>
+                        <div className="flex flex-col">
+                            <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Send in chat</span>
+                            <span className="pl-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:left-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0">{postContent.metadata.postsCount._sum.messagesCount} Messages</span>
+                        </div>
 
-                <div className="flex flex-col">
-                    <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Send by user</span>
-                    <span className="pl-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:left-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0">25 Messages</span>
-                </div>
+                        <div className="flex flex-col">
+                            <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Send by user</span>
+                            <span className="pl-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:left-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0">{postContent.metadata.messagesCount} Messages</span>
+                        </div>
 
-                <div className="flex flex-col">
-                    <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Recipient</span>
-                    <span className="pl-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:left-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0">Personal</span>
-                </div>
+                        <div className="flex flex-col">
+                            <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Recipient</span>
+                            <span className="pl-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:left-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0">{postContent.post.recipients.slice(0,1) + postContent.post.recipients.slice(1,).toLowerCase()}</span>
+                        </div>
 
-                <div className="flex flex-col">
-                    <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Create Date</span>
-                    <span className="pl-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:left-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0">2025-07-11 9:33:39 PM</span>
-                </div>
+                        <div className="flex flex-col">
+                            <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Create Date</span>
+                            <span className="pl-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:left-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0">{postContent.post.createDateTime.date} {postContent.post.createDateTime.time}</span>
+                        </div>
 
-                <div className="flex flex-col">
-                    <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Publish Date</span>
-                    <span className="pl-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:left-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0">2025-07-11 9:33:39 PM</span>
-                </div>
+                        <div className="flex flex-col">
+                            <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Publish Date</span>
+                            <span className="pl-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:left-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0">{postContent.post.publishDateTime.date} {postContent.post.publishDateTime.time}</span>
+                        </div>
 
-                <div className="flex flex-col">
-                    <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Unpublish Date</span>
-                    <span className="pl-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:left-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0">2025-07-11 9:33:39 PM</span>
-                </div>
+                        {postContent.post.unpublish && (
+                            <div className="flex flex-col">
+                                <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Unpublish Date</span>
+                                <span className="pl-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:left-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0">{postContent.post.unpublishDateTime.date} {postContent.post.unpublishDateTime.time}</span>
+                            </div>
+                        )}
 
-                <div className="flex flex-col">
-                    <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Preview Message</span>
-                    <span className="pl-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:left-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0">Malesuada lorem urna eu sapien. Fusce mattis elit.</span>
-                </div>
+                        {postContent.post.preview && (
+                            <div className="flex flex-col">
+                                <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Preview Message</span>
+                                <span className="pl-2.5 relative before:h-0.5 before:w-2 before:bg-palette-dark-slate before:absolute before:left-0 before:top-3 after:h-3 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0">{postContent.post.previewMessage}</span>
+                            </div>
+                        )}
 
-                <div className="flex flex-col">
-                    <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Users</span>
-                    <div className="pl-2.5 border-l-2 border-palette-dark-slate">
-                        <Badge className="mr-0.5">Gabriel Souza</Badge>
-                        <Badge className="mr-0.5">Gabriel Reiz</Badge>
-                        <Badge className="mr-0.5">Gar</Badge>
-                        <Badge className="mr-0.5">GaRReiz</Badge>
-                        <Badge className="mr-0.5">Hyuru</Badge>
-                        <Badge className="mr-0.5">Rayna</Badge>
-                        <Badge className="mr-0.5">Angelico del Monte Pereira Santos</Badge>
-                    </div>
-                </div>
+                        {postContent.post.recipients == "SHARE" && (
+                            <div className="flex flex-col">
+                                <span className="text-sm pl-4.5 relative before:h-0.5 before:w-4 before:bg-palette-dark-slate before:absolute before:left-0 before:top-2.5 after:h-2.5 after:w-0.5 after:bg-palette-dark-slate after:absolute after:left-0 after:bottom-0">Users</span>
+                                <div className="pl-2.5 border-l-2 border-palette-dark-slate">
+                                    {postContent.post.shareTo.map(user => <Badge className="mr-0.5">{user}</Badge>)}
+                                </div>
+                            </div>
+                        )}
+                    </>
+                ): <div className="font-semibold text-zinc-300 text-xl">None post selected</div>}
             </div>
         </div>
     )
