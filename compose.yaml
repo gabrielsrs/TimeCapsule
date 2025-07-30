@@ -1,0 +1,28 @@
+services:
+  pg:
+    image: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    env_file:
+      - path: ./packages/backend/.env
+        required: true
+    
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    command: >
+      sh -c "redis-server
+        --requirepass $$REDIS_PASSWORD
+        --user $$REDIS_USER on >$$REDIS_PASSWORD ~* +@all"
+    volumes:
+      - redis_data:/data
+    env_file:
+      - path: ./packages/backend/.env
+        required: true
+      
+volumes:
+  pgdata:
+  redis_data:
