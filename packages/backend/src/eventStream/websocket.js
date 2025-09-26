@@ -1,6 +1,8 @@
 const { Server } = require("socket.io");
 const { tokenDataFromSocket } = require("../util/tokenData.js")
 const { updateMetadataService } = require("../services/metadata.js")
+const messageController = require('../controllers/message.js');
+
 
 module.exports = function setupWebSocket(server){
     const io = new Server(server, {
@@ -11,22 +13,27 @@ module.exports = function setupWebSocket(server){
     })
 
     io.on("connection", socket => {
-        socket.on("enterPostChat", postId => { // use computeUserIdFromHeaders to userId
+        socket.on("enterPostChat", async postId => { // use computeUserIdFromHeaders to userId
             // validations if user in in this post
-            const rooms = io.of("/").adapter.rooms
-            const addRoom = !rooms.has(postId)
-
-            for(const room of rooms) {
-                if(!io.sockets.sockets.has(room[0])) {
-                    socket.leave(room[0])
+            for(const room of socket.rooms) {
+                if(room != socket.id) {
+                    socket.leave(room)
                 }
             }
 
-            if(addRoom) {
-                socket.join(Number(postId))
+            socket.join(Number(postId))
+
+            const userData = await tokenDataFromSocket(socket)
+
+            const data = {
+                userId: userData.sub,
+                postId
             }
 
             // load messages
+            const messages = await messageController.getMessages({ data })
+
+            io.emit("loadMessages", messages)
         })
 
         socket.on("message", async messageObj => {
@@ -35,15 +42,26 @@ module.exports = function setupWebSocket(server){
             const sockets = await io.in(messageObj.postId).fetchSockets();
 
 
-            const data = await tokenDataFromSocket(socket)
+            const userData = await tokenDataFromSocket(socket)
 
-            io.to(messageObj.postId).emit("message", {
-                message: messageObj.message,
-                name: data.user_metadata.name,
-                userId: data.sub
-            })
+            const data = {
+                ...messageObj,
+                name: userData.user_metadata.name,
+                avatar_url: userData.user_metadata.avatar_url,
+                userId: userData.sub,
+            }
 
-            // save messages
+            const rooms = io.of("/").adapter.rooms
+            
+            if (rooms.has(messageObj.postId) && rooms.get(messageObj.postId).has(socket.id)) {
+                data.userInRoomCount = rooms.get(messageObj.postId).size
+
+                io.to(messageObj.postId).emit("message", data)
+
+                messageController.newMessage({ data, sockets })
+
+            }
+
         })
 
         socket.on("leavePostChat", postId => { 

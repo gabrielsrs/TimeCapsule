@@ -1,4 +1,3 @@
-const { connect } = require("../routes/post")
 const { prisma } = require("./prismaClient")
 
 module.exports = {

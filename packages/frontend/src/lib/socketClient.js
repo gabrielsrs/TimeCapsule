@@ -29,6 +29,10 @@ export class SocketClient {
         this.socket.on("message", callback)
     }
 
+    onLoadMessages(callback) {
+        this.socket.on("loadMessages", callback)
+    }
+
     emitMessage(messageObj) {
         this.socket.emit("message", messageObj)
     }
