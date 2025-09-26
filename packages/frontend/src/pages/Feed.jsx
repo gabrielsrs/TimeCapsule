@@ -88,6 +88,10 @@ export function Feed() {
     })
 
 
+    const handleLoadMessage = (messageObj) => {
+        setMessages([...messageObj]);
+    }
+
     const handleMessage = (messageObj) => {
         setMessages(previousMessages => [...previousMessages, messageObj]);
     }
@@ -296,7 +300,7 @@ export function Feed() {
                 </div>
                 <div className="text-xl/1 font-semibold ml-1">
                     <span>[ </span>
-                    <span className="text-base">{status === 'success'? postsData.posts.length: 0}</span>
+                    <span className="text-base">{status === 'success'? postsData.posts?.length: 0}</span>
                     <span> ]</span>
                 </div>
             </div>
@@ -448,7 +452,7 @@ export function Feed() {
                 </div>
                 <Separator className="my-2"/>
 
-                {status === 'success' && postsData.posts.map(postData => {
+                {status === 'success' && postsData.posts?.map(postData => {
                     const isThisPostOpen = postContent.open && postData.id == postContent.postId
                     const recipients = postData.recipients.slice(0,1) + postData.recipients.slice(1,).toLowerCase()
                     const publishDateTime = date(new Date(postData.publishDate.slice(0,-1)))
@@ -594,11 +598,12 @@ export function Feed() {
                                                     setMessages([])
                                                     socketClient.enterPostChat(postData.id)  
                                                     socketClient.off("message")
+                                                    socketClient.onLoadMessages(handleLoadMessage)
                                                     socketClient.onMessage(handleMessage)
                                                     setPostMessage(!postMessage)
                                                 }}><MessageCircle size={18}/></Button>
                                                 <Button variant="none" size="none" title="Go to chat" className="size-5 cursor-pointer" onClick={() => addToChat.mutate(postData.id)}><MessageSquareShare size={18}/></Button>
-                                                {user.id == postData.authorId && (
+                                                {user?.id == postData.authorId && (
                                                     <>
                                                         <Button variant="none" size="none" title="Edit" className="size-5 cursor-pointer" onClick={() => toast("Coming soon")}><SquarePen size={18}/></Button>
                                                         <Button variant="none" size="none" title="Remove" className="size-5 cursor-pointer" onClick={() => toast("Coming soon")}><Trash2 size={18}/></Button>

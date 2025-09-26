@@ -8,8 +8,10 @@ module.exports = {
 
         return message
     },
-    async getMessagesRepository(){
-        const messages = await prisma.message.findMany()
+    async getMessagesRepository({ filter }){
+        const messages = await prisma.message.findMany({ 
+            where: filter
+        })
 
         return messages
     },
@@ -22,7 +24,7 @@ module.exports = {
         userId,
         postId,
     }){
-        const message = await prisma.message.create({
+        const newMessage = await prisma.message.create({
             data: {
                 message,
                 sended,
@@ -34,7 +36,7 @@ module.exports = {
             },
         })
 
-        return message
+        return newMessage
     },
     async deleteMessageRepository({ messageId }){
         const deleteMessage = await prisma.message.delete({
